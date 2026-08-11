@@ -1,0 +1,23 @@
+# Environments
+venv/
+env/
+.env
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data Caches (HuggingFace TREC-50 dataset)
+data/cache/
+
+# PyTorch & Qiskit specific
+*.pt
+*.pth
+qiskit_out/
+
+# IDE & OS
+.DS_Store
+.vscode/
+.idea/
+*.swp

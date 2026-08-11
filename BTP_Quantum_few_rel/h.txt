@@ -1,0 +1,138 @@
+
+(.venv) (base) apple@Apples-MacBook-Air-2 Qprotonet % clear
+(.venv) (base) apple@Apples-MacBook-Air-2 Qprotonet % python run_experiments.py
+=========================================================
+  Starting Full QPN Benchmark Suite (Thesis Run)
+=========================================================
+
+>>> Phase 1: Main Benchmarks (5w1s, 5w5s, 10w1s, 10w5s)
+Starting Main Benchmark. Output dir: results/20260731_000739
+Fitting QCHBA on train_pool (this might take a moment)...
+  [QCHBA] Starting fit over 20 iterations (pop_size=10)...
+  [QCHBA] Iteration 5/20 | Best Fitness: 0.6401 | Features Masked: 333/384
+  [QCHBA] Iteration 10/20 | Best Fitness: 0.6401 | Features Masked: 333/384
+  [QCHBA] Iteration 15/20 | Best Fitness: 0.6401 | Features Masked: 333/384
+  [QCHBA] Iteration 20/20 | Best Fitness: 0.6401 | Features Masked: 333/384
+  [QCHBA] Done! Selected 333 optimal features out of 384.
+/Users/apple/Desktop/BTP Research Mohit Sir/Qprotonet/.venv/lib/python3.11/site-packages/sklearn/feature_selection/_univariate_selection.py:112: UserWarning: Features [105 192] are constant.
+  warnings.warn("Features %s are constant." % constant_features_idx, UserWarning)
+/Users/apple/Desktop/BTP Research Mohit Sir/Qprotonet/.venv/lib/python3.11/site-packages/sklearn/feature_selection/_univariate_selection.py:113: RuntimeWarning: invalid value encountered in divide
+  f = msb / msw
+
+========================================
+Running Benchmark: 5w1s
+========================================
+Evaluating Classical ProtoNet (Untrained)...
+    [Eval] 60/600 episodes complete. (Current Acc: 0.3802)
+    [Eval] 120/600 episodes complete. (Current Acc: 0.3729)
+    [Eval] 180/600 episodes complete. (Current Acc: 0.3744)
+    [Eval] 240/600 episodes complete. (Current Acc: 0.3781)
+    [Eval] 300/600 episodes complete. (Current Acc: 0.3760)
+    [Eval] 360/600 episodes complete. (Current Acc: 0.3789)
+    [Eval] 420/600 episodes complete. (Current Acc: 0.3792)
+    [Eval] 480/600 episodes complete. (Current Acc: 0.3773)
+    [Eval] 540/600 episodes complete. (Current Acc: 0.3792)
+    [Eval] 600/600 episodes complete. (Current Acc: 0.3806)
+  Accuracy: 0.38 ± 0.01
+Evaluating Classical SVM (RBF)...
+    [Eval] 60/600 episodes complete. (Current Acc: 0.3722)
+    [Eval] 120/600 episodes complete. (Current Acc: 0.3684)
+    [Eval] 180/600 episodes complete. (Current Acc: 0.3741)
+    [Eval] 240/600 episodes complete. (Current Acc: 0.3726)
+    [Eval] 300/600 episodes complete. (Current Acc: 0.3734)
+    [Eval] 360/600 episodes complete. (Current Acc: 0.3729)
+    [Eval] 420/600 episodes complete. (Current Acc: 0.3725)
+    [Eval] 480/600 episodes complete. (Current Acc: 0.3747)
+    [Eval] 540/600 episodes complete. (Current Acc: 0.3768)
+    [Eval] 600/600 episodes complete. (Current Acc: 0.3774)
+  Accuracy: 0.38 ± 0.01
+Evaluating Classical LogReg...
+    [Eval] 60/600 episodes complete. (Current Acc: 0.3929)
+    [Eval] 120/600 episodes complete. (Current Acc: 0.3978)
+    [Eval] 180/600 episodes complete. (Current Acc: 0.3944)
+    [Eval] 240/600 episodes complete. (Current Acc: 0.3941)
+    [Eval] 300/600 episodes complete. (Current Acc: 0.3887)
+    [Eval] 360/600 episodes complete. (Current Acc: 0.3852)
+    [Eval] 420/600 episodes complete. (Current Acc: 0.3866)
+    [Eval] 480/600 episodes complete. (Current Acc: 0.3845)
+    [Eval] 540/600 episodes complete. (Current Acc: 0.3836)
+    [Eval] 600/600 episodes complete. (Current Acc: 0.3860)
+  Accuracy: 0.39 ± 0.01
+Evaluating Classical kNN (k=1)...
+    [Eval] 60/600 episodes complete. (Current Acc: 0.3727)
+    [Eval] 120/600 episodes complete. (Current Acc: 0.3798)
+    [Eval] 180/600 episodes complete. (Current Acc: 0.3779)
+    [Eval] 240/600 episodes complete. (Current Acc: 0.3786)
+    [Eval] 300/600 episodes complete. (Current Acc: 0.3787)
+    [Eval] 360/600 episodes complete. (Current Acc: 0.3801)
+    [Eval] 420/600 episodes complete. (Current Acc: 0.3799)
+    [Eval] 480/600 episodes complete. (Current Acc: 0.3802)
+    [Eval] 540/600 episodes complete. (Current Acc: 0.3798)
+    [Eval] 600/600 episodes complete. (Current Acc: 0.3817)
+  Accuracy: 0.38 ± 0.01
+Evaluating Quantum QSVC (ZZ)...
+    [Eval] 60/600 episodes complete. (Current Acc: 0.2060)
+    [Eval] 120/600 episodes complete. (Current Acc: 0.2057)
+    [Eval] 180/600 episodes complete. (Current Acc: 0.2036)
+    [Eval] 240/600 episodes complete. (Current Acc: 0.2000)
+    [Eval] 300/600 episodes complete. (Current Acc: 0.2009)
+    [Eval] 360/600 episodes complete. (Current Acc: 0.2001)
+    [Eval] 420/600 episodes complete. (Current Acc: 0.2003)
+    [Eval] 480/600 episodes complete. (Current Acc: 0.1996)
+    [Eval] 540/600 episodes complete. (Current Acc: 0.2003)
+    [Eval] 600/600 episodes complete. (Current Acc: 0.2006)
+  Accuracy: 0.20 ± 0.00
+Evaluating Quantum ProtoNet...
+  [Meta-Training] Optimizing Quantum ProtoNet...
+  [Train] Ep 1/10 - Loss: 1.6050
+  [Train] Ep 2/10 - Loss: 1.6013
+  [Train] Ep 3/10 - Loss: 1.6239
+  [Train] Ep 4/10 - Loss: 1.6070
+  [Train] Ep 5/10 - Loss: 1.6179
+  [Train] Ep 6/10 - Loss: 1.6193
+  [Train] Ep 7/10 - Loss: 1.6275
+  [Train] Ep 8/10 - Loss: 1.6171
+  [Train] Ep 9/10 - Loss: 1.6199
+  [Train] Ep 10/10 - Loss: 1.6122
+  => Meta-Training Complete. Avg Loss: 1.6151
+^X^CTraceback (most recent call last):
+  File "/Users/apple/Desktop/BTP Research Mohit Sir/Qprotonet/run_experiments.py", line 33, in <module>
+    main()
+  File "/Users/apple/Desktop/BTP Research Mohit Sir/Qprotonet/run_experiments.py", line 22, in main
+    run_main_benchmark(n_episodes=n_episodes_benchmark, n_qubits=n_qubits, seed=42)
+  File "/Users/apple/Desktop/BTP Research Mohit Sir/Qprotonet/qpn/experiments/run_main_benchmark.py", line 116, in run_main_benchmark
+    metrics = evaluate(model_fn, test_sampler, n_episodes=n_episodes)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Desktop/BTP Research Mohit Sir/Qprotonet/qpn/eval/harness.py", line 36, in evaluate
+    preds = model_fn(episode)
+            ^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Desktop/BTP Research Mohit Sir/Qprotonet/qpn/experiments/run_main_benchmark.py", line 103, in model_fn
+    return model.predict(matched_ep)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Desktop/BTP Research Mohit Sir/Qprotonet/qpn/quantum/protonet.py", line 254, in predict
+    logits = self.forward(s_x_t, q_x_t, s_y_t)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Desktop/BTP Research Mohit Sir/Qprotonet/qpn/quantum/protonet.py", line 242, in forward
+    return self._eval_forward(s_x, q_x, s_y)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Desktop/BTP Research Mohit Sir/Qprotonet/qpn/quantum/protonet.py", line 226, in _eval_forward
+    f = state_fidelity(q_states[j], rho_c)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Desktop/BTP Research Mohit Sir/Qprotonet/.venv/lib/python3.11/site-packages/qiskit/quantum_info/states/measures.py", line 58, in state_fidelity
+    state2 = _format_state(state2, validate=validate)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Desktop/BTP Research Mohit Sir/Qprotonet/.venv/lib/python3.11/site-packages/qiskit/quantum_info/states/utils.py", line 227, in _format_state
+    if validate and not state.is_valid():
+                        ^^^^^^^^^^^^^^^^
+  File "/Users/apple/Desktop/BTP Research Mohit Sir/Qprotonet/.venv/lib/python3.11/site-packages/qiskit/quantum_info/states/densitymatrix.py", line 207, in is_valid
+    return is_positive_semidefinite_matrix(self.data, rtol=rtol, atol=atol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Desktop/BTP Research Mohit Sir/Qprotonet/.venv/lib/python3.11/site-packages/qiskit/quantum_info/operators/predicates.py", line 141, in is_positive_semidefinite_matrix
+    vals = np.linalg.eigvalsh(mat)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/apple/Desktop/BTP Research Mohit Sir/Qprotonet/.venv/lib/python3.11/site-packages/numpy/linalg/linalg.py", line 1181, in eigvalsh
+    w = gufunc(a, signature=signature, extobj=extobj)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+
+(.venv) (base) apple@Apples-MacBook-Air-2 Qprotonet % 

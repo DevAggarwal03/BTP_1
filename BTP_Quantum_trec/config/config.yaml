@@ -1,0 +1,21 @@
+data:
+  dataset: "FastFit/trec_50"                       # Fine-grained TREC-50 (50 classes)
+  encoder_model: "all-MiniLM-L6-v2"                # Sentence-Transformers model (384-dim embeddings)
+  n_features_lda: 32                               # LDA output dims (max for TREC-50 = 49 = C-1)
+  cache_dir: "data/cache"
+
+quantum:
+  n_qubits: 8                   # QHBA selects 8 from 32 LDA features
+  shots: 1024                   # Measurement shots per oracle call
+
+qhba:
+  n_agents: 10                  # Population size
+  max_iter: 30                  # Maximum iterations
+  c1: 0.5                       # Honey phase coefficient (exploitation)
+  c2: 0.5                       # Badger phase coefficient (exploration)
+  use_quantum_oracle: true      # Toggle quantum vs classical-only fitness
+
+episode_sampler:                # For future few-shot training (Phase 3)
+  n_way: 10
+  k_shot: 1
+  n_query: 15
