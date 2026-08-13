@@ -1,59 +1,71 @@
+"""
+prototype_ops.py
+Quantum Prototype Calculator for the Quantum Prototypical Network.
+
+Computes the mixed-state Density Matrix class prototype by averaging the
+pure-state density matrices of all support set examples for a given class:
+
+    ρ_k = (1 / K) Σᵢ DensityMatrix(|ψᵢ⟩)
+
+Uses vectorized NumPy operations — avoids the O(4^n) element-wise Python loop
+from the previous implementation.
+"""
+from __future__ import annotations
+
 from typing import List, Union
+
+import numpy as np
 from qiskit.quantum_info import Statevector, DensityMatrix
+
 
 class QuantumPrototypeCalculator:
     """
     Quantum Prototype Calculator (Few-shot class prototypes).
-    This class handles the conversion of pure states (from VQC embeddings)
-    into mixed state Density Matrices, which serve as the prototypes for classes.
+
+    Converts a list of pure quantum states (Statevectors from the VQC) into a
+    single mixed-state Density Matrix representing the class prototype.
+
+    Args:
+        num_qubits: Number of qubits used in the VQC. Determines matrix size (2^n × 2^n).
     """
 
-    def __init__(self, num_qubits: int):
-        """
-        Initialize the calculator.
-        Args:
-            num_qubits (int): Number of qubits used in the VQC.
-                              Currently limited to 8 to avoid exponential memory blowup.
-        """
+    def __init__(self, num_qubits: int) -> None:
         self.num_qubits = num_qubits
-        if self.num_qubits > 8:
-            # Simple warning/guard as per discussions (can be removed if tested)
-            print(f"Warning: Calculating explicit {2**num_qubits}x{2**num_qubits} density matrix "
-                  f"for {num_qubits} qubits might be computationally expensive.")
+        if num_qubits > 10:
+            import warnings
+            warnings.warn(
+                f"Density matrix for {num_qubits} qubits is "
+                f"{2**num_qubits}×{2**num_qubits} = {4**num_qubits} elements. "
+                "Keep n_qubits ≤ 8 for reasonable memory usage.",
+                ResourceWarning,
+                stacklevel=2,
+            )
 
-    def calculate_class_prototype(self, support_states: List[Union[Statevector, DensityMatrix]]) -> DensityMatrix:
+    def calculate_class_prototype(
+        self,
+        support_states: List[Union[Statevector, DensityMatrix]],
+    ) -> DensityMatrix:
         """
-        Calculates the mixed state (Density Matrix) representing the class prototype
-        by averaging the states of all samples in the support set.
+        Calculate the mixed-state Density Matrix prototype for a class.
+
+        Stacks all support-set density matrices into a (K, 2^n, 2^n) array
+        and takes the vectorized mean along axis 0 — no Python element loops.
 
         Args:
-            support_states: A list of Qiskit Statevector or DensityMatrix objects 
-                            representing the quantum embeddings of the support set for a specific class.
+            support_states: List of Qiskit Statevector or DensityMatrix objects.
 
         Returns:
-            DensityMatrix: The averaged mixed state `ρ_k = (1/|S_k|) Σ |ψ_i⟩⟨ψ_i|`.
+            DensityMatrix: The averaged mixed state ρ_k.
+
+        Raises:
+            ValueError: If support_states is empty.
         """
         if not support_states:
-            raise ValueError("The support set cannot be empty.")
+            raise ValueError("support_states cannot be empty.")
 
-        # Initialize an empty density matrix of the correct dimension
-        dim = 2 ** self.num_qubits
-        mixed_state_data = [[0.0j for _ in range(dim)] for _ in range(dim)]
-        
-        # Accumulate the density matrices
-        for state in support_states:
-            # If the input is a pure Statevector, DensityMatrix(state) calculates |ψ⟩⟨ψ|
-            dm = DensityMatrix(state)
-            
-            # Add element-wise
-            for i in range(dim):
-                for j in range(dim):
-                    mixed_state_data[i][j] += dm.data[i][j]
-
-        # Average the accumulated matrix
-        num_samples = len(support_states)
-        for i in range(dim):
-            for j in range(dim):
-                mixed_state_data[i][j] /= num_samples
-
-        return DensityMatrix(mixed_state_data)
+        # Stack all density matrices: shape (K, dim, dim), then mean over K axis.
+        dm_data = np.stack(
+            [DensityMatrix(state).data for state in support_states],
+            axis=0,
+        )
+        return DensityMatrix(dm_data.mean(axis=0))

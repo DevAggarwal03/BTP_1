@@ -1,60 +1,82 @@
+"""
+trainer.py
+Inner-loop trainer for the Quantum Prototypical Network.
+
+Wraps the QuantumProtoNet model with an Adam optimizer and provides
+a train_step() method that executes one episodic forward + backward pass.
+
+This file is kept for backward compatibility with the outer_loop.py.
+The canonical training loop is in quantum/eval/train.py (meta_train_qpn).
+"""
+from __future__ import annotations
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.optim.lr_scheduler import StepLR
+
+from quantum.training.qpn_model import QuantumProtoNet
+
 
 class MetaLearningTrainer:
     """
-    Handles the inner loop of the training process (VQC Parameter Tuning).
-    Uses PyTorch's Adam optimizer to calculate quantum gradients via the TorchConnector 
-    and backpropagate the loss.
+    Episodic inner-loop trainer for QuantumProtoNet.
+
+    Args:
+        model:         A QuantumProtoNet instance.
+        learning_rate: Adam optimizer learning rate.
+        lr_step_size:  StepLR step size (episodes between LR decay).
+        lr_gamma:      StepLR gamma (multiplicative decay factor).
     """
 
-    def __init__(self, model: nn.Module, learning_rate: float = 0.01):
-        """
-        Initialize the trainer.
-        Args:
-            model (nn.Module): The QuantumPrototypicalNetwork.
-            learning_rate (float): The step size for the optimizer.
-        """
+    def __init__(
+        self,
+        model: QuantumProtoNet,
+        learning_rate: float = 0.01,
+        lr_step_size: int = 15,
+        lr_gamma: float = 0.5,
+    ) -> None:
         self.model = model
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
-        # In a real prototypical network, loss is calculated manually via negative log-likelihood 
-        # over the quantum infidelities (Blocks 4, 5, 6). 
-        # Here we mock a standard CrossEntropyLoss for structural completeness.
+        self.scheduler = StepLR(
+            self.optimizer, step_size=lr_step_size, gamma=lr_gamma
+        )
         self.loss_fn = nn.CrossEntropyLoss()
 
-    def train_step(self, support_x: torch.Tensor, support_y: torch.Tensor, 
-                   query_x: torch.Tensor, query_y: torch.Tensor) -> float:
+    def train_step(
+        self,
+        support_x: torch.Tensor,
+        support_y: torch.Tensor,
+        query_x: torch.Tensor,
+        query_y: torch.Tensor,
+    ) -> float:
         """
-        Executes a single episodic training step (Forward pass + Backprop).
-        
+        Execute one episodic training step.
+
+        The model computes quantum prototypes from the support set and
+        measures infidelity distances to each query — all real quantum ops.
+        CrossEntropyLoss is then computed on those distance-based logits.
+
         Args:
-            support_x: Features of the support set.
-            support_y: Labels of the support set.
-            query_x: Features of the query set.
-            query_y: Labels of the query set.
-            
+            support_x: float tensor (N*K, n_qubits)
+            support_y: long  tensor (N*K,)  — labels 0..N-1
+            query_x:   float tensor (N*Q, n_qubits)
+            query_y:   long  tensor (N*Q,)  — labels 0..N-1
+
         Returns:
-            float: The loss value for this step.
+            float: Loss value for this episode.
         """
         self.model.train()
-        
-        # 1. Zero the gradients
         self.optimizer.zero_grad()
-        
-        # 2. Forward pass (Through Angle Encoding -> VQC -> Measurement)
-        # Note: In a full QPN, you would calculate the prototypes from support_x here,
-        # calculate infidelity distances from query_x to prototypes, and apply softmax.
-        # This is a simplified structural representation.
-        predictions = self.model(query_x)
-        
-        # 3. Calculate Loss (Block 8)
-        loss = self.loss_fn(predictions, query_y)
-        
-        # 4. Backward pass (Quantum Gradients via Parameter-Shift Rule)
+
+        # Real QPN forward: support → prototypes → distances → logits
+        logits = self.model(support_x, support_y, query_x)  # (N*Q, N)
+
+        loss = self.loss_fn(logits, query_y)
         loss.backward()
-        
-        # 5. Update VQC Angles
+
         self.optimizer.step()
-        
+        self.scheduler.step()
+
         return loss.item()
+

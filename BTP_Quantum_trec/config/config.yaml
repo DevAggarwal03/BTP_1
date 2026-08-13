@@ -15,7 +15,18 @@ qhba:
   c2: 0.5                       # Badger phase coefficient (exploration)
   use_quantum_oracle: true      # Toggle quantum vs classical-only fitness
 
-episode_sampler:                # For future few-shot training (Phase 3)
-  n_way: 10
+training:
+  n_way: 5
   k_shot: 1
   n_query: 15
+  n_episodes: 100
+  learning_rate: 0.01
+  lr_step_size: 15
+  lr_gamma: 0.5
+  temperature: 1.0
+
+evaluation:
+  n_way: 5
+  k_shot: 1
+  n_query: 15
+  n_episodes: 300

@@ -25,6 +25,13 @@ Fitness proxy
 
 This is a *heuristic* quantum enhancement. It is combined 50/50 with a
 classical KNN fitness in ``qhba.py`` for the final evaluation.
+
+GPU Support
+-----------
+The oracle auto-detects a CUDA-capable GPU via ``qiskit-aer-gpu`` and
+falls back to CPU simulation if unavailable. ``evaluate_batch`` submits all
+agent circuits as a *single* ``backend.run()`` call, removing the per-agent
+transpile-wait loop and enabling GPU parallelism.
 """
 from __future__ import annotations
 
@@ -32,6 +39,19 @@ import numpy as np
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit.library import real_amplitudes
 from qiskit_aer import AerSimulator
+
+
+def _make_aer_backend(seed: int) -> AerSimulator:
+    """Return a GPU-accelerated AerSimulator, falling back to CPU."""
+    try:
+        backend = AerSimulator(device="GPU", seed_simulator=seed)
+        # Probe the backend — raises if no GPU available
+        backend.configuration()
+        print("[QuantumOracle] GPU backend initialised (qiskit-aer-gpu).")
+        return backend
+    except Exception:
+        print("[QuantumOracle] GPU unavailable — using CPU simulator.")
+        return AerSimulator(seed_simulator=seed)
 
 
 class QuantumOracle:
@@ -54,8 +74,8 @@ class QuantumOracle:
         self.n_qubits = n_qubits
         self.shots = shots
 
-        # Local Aer simulator — statevector noise-free
-        self.backend = AerSimulator(seed_simulator=seed)
+        # GPU-aware backend with CPU fallback
+        self.backend = _make_aer_backend(seed)
 
         # Fix random ansatz weights once (not trained — used as a deterministic mixer)
         rng = np.random.default_rng(seed=seed)
@@ -98,13 +118,33 @@ class QuantumOracle:
         """
         Evaluate quantum fitness for a batch of position vectors.
 
+        Builds all circuits first, then submits them as a **single**
+        ``backend.run()`` call. This removes the per-agent sequential
+        wait and allows GPU parallelism over the circuit batch.
+
         Args:
             positions: 2-D array of shape ``(n_agents, n_features)``.
 
         Returns:
             1-D array of fitness values, shape ``(n_agents,)``.
         """
-        return np.array([self.evaluate(pos) for pos in positions])
+        circuits = []
+        for pos in positions:
+            x = np.clip(np.asarray(pos, dtype=float)[: self.n_qubits], 0.0, 1.0)
+            circuits.append(self._build_circuit(x))
+
+        # Single batched transpile + run
+        transpiled = transpile(circuits, self.backend, optimization_level=0)
+        job = self.backend.run(transpiled, shots=self.shots)
+        result = job.result()
+
+        fitness_values = []
+        for i in range(len(circuits)):
+            counts = result.get_counts(i)
+            p_zero = counts.get(self._all_zeros_key, 0) / self.shots
+            fitness_values.append(float(1.0 - p_zero))
+
+        return np.array(fitness_values)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -129,10 +169,6 @@ class QuantumOracle:
         # --- Measurement ---
         qc.measure_all()
         return qc
-
-    # ------------------------------------------------------------------
-    # representation of the quantum oracle 
-    # ------------------------------------------------------------------
 
     def __repr__(self) -> str:
         return f"QuantumOracle(n_qubits={self.n_qubits}, shots={self.shots})"
