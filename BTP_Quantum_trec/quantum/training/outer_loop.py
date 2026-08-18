@@ -23,6 +23,7 @@ from quantum.feature_selection.qhba import QHBA, QHBAResult
 from quantum.training.qpn_model import QuantumProtoNet
 from quantum.training.trainer import MetaLearningTrainer
 from data.episode_sampler import EpisodeSampler, build_class_pool
+from data.preprocessor import QuantumFeaturePreprocessor
 
 
 class QPNMasterTrainer:
@@ -88,29 +89,36 @@ class QPNMasterTrainer:
             if len(selected_features) == 0 or len(selected_features) > n_qubits:
                 return 1e6
 
-            # 2. Build filtered class pool for this feature mask
+            # 2. Select feature columns from each class
             filtered_pool = {
                 cls_id: instances[:, selected_features]
                 for cls_id, instances in class_pool.items()
             }
 
-            # Pad to n_qubits if fewer features selected
-            n_sel = selected_features.shape[0]
-            if n_sel < n_qubits:
-                pad = n_qubits - n_sel
-                filtered_pool = {
-                    cls_id: np.pad(instances, ((0, 0), (0, pad)))
-                    for cls_id, instances in filtered_pool.items()
-                }
+            # 3. Amplitude-encode: pad to 2^n_qubits and L2-normalize.
+            #    This is what StatePreparation expects — a 2^n_qubits-dim unit vector.
+            state_dim = 2 ** n_qubits
+            def _amp_encode(arr: np.ndarray) -> np.ndarray:
+                """Pad columns to state_dim and L2-normalize each row."""
+                padded = np.zeros((arr.shape[0], state_dim), dtype=np.float32)
+                padded[:, : arr.shape[1]] = arr
+                norms = np.linalg.norm(padded, axis=1, keepdims=True)
+                norms[norms == 0] = 1.0
+                return padded / norms
 
-            # 3. Sample one proper N-way K-shot episode
+            amp_pool = {
+                cls_id: _amp_encode(instances)
+                for cls_id, instances in filtered_pool.items()
+            }
+
+            # 4. Sample N-way K-shot episodes from the amplitude-encoded pool
             try:
-                sampler = EpisodeSampler(filtered_pool, n_way, k_shot, n_query)
+                sampler = EpisodeSampler(amp_pool, n_way, k_shot, n_query)
                 episodes = sampler.sample(n_episodes=epochs)
             except ValueError:
                 return 1e6  # Not enough classes with sufficient examples
 
-            # 4. Fresh QPN model + trainer for this fitness eval
+            # 5. Fresh QPN model + trainer for this fitness eval
             model = QuantumProtoNet(n_qubits=n_qubits)
             trainer = MetaLearningTrainer(model=model, learning_rate=lr)
 
