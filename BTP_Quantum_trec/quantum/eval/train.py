@@ -2,8 +2,9 @@
 train.py
 Episodic meta-training loop for the Quantum Prototypical Network.
 
-Mirrors BTP_Quantum_few_rel/qpn/eval/train.py but adapted for the
-TREC-50 integer-label class structure and the local QuantumProtoNet model.
+Mirrors BTP_Quantum_few_rel/qpn/eval/train.py — accepts a global_preprocessor
+to transform support/query features into amplitude-encoded vectors before the
+quantum forward pass.
 """
 from __future__ import annotations
 
@@ -21,38 +22,41 @@ def meta_train_qpn(
     model: QuantumProtoNet,
     X_train: np.ndarray,
     y_train: np.ndarray,
+    global_preprocessor,
     n_way: int = 5,
     k_shot: int = 1,
     n_query: int = 15,
     n_train_episodes: int = 100,
-    lr: float = 0.01,
+    lr: float = 0.05,
     lr_step_size: int = 15,
     lr_gamma: float = 0.5,
 ) -> QuantumProtoNet:
     """
     Episodic meta-training loop for QuantumProtoNet.
 
-    For each episode:
-      1. Sample N random classes + K support + Q query examples per class.
-      2. Run the full QPN forward: encoding → VQC → prototypes → distances → logits.
-      3. Compute CrossEntropyLoss on the query logits.
-      4. Backpropagate via PyTorch (gradients w.r.t. VQC angles θ and temperature β).
-      5. Step Adam optimizer + StepLR scheduler.
+    Mirrors few_rel's meta_train_qpn in qpn/eval/train.py:
+    - Samples N-way K-shot episodes from the LDA feature pool.
+    - Transforms support/query features via the global QuantumFeaturePreprocessor
+      (amplitude-encoding: pad to 2^n_qubits and L2-normalize).
+    - Runs the differentiable QPN forward pass (FidelityParamShift).
+    - Backpropagates CrossEntropyLoss through PSR gradients.
+    - Steps Adam + StepLR scheduler.
 
     Args:
-        model:            Initialised QuantumProtoNet instance.
-        X_train:          Training feature matrix (N_samples, n_qubits).
-        y_train:          Training integer labels (N_samples,).
-        n_way:            Number of classes per episode.
-        k_shot:           Support examples per class.
-        n_query:          Query examples per class.
-        n_train_episodes: Total number of training episodes.
-        lr:               Adam learning rate.
-        lr_step_size:     StepLR step size (episodes between decays).
-        lr_gamma:         StepLR decay factor.
+        model:                Initialized QuantumProtoNet instance.
+        X_train:              LDA feature matrix (N_samples, n_lda).
+        y_train:              Integer label array (N_samples,).
+        global_preprocessor:  Fitted QuantumFeaturePreprocessor for amplitude encoding.
+        n_way:                Number of classes per episode.
+        k_shot:               Support examples per class.
+        n_query:              Query examples per class.
+        n_train_episodes:     Total training episodes.
+        lr:                   Adam learning rate.
+        lr_step_size:         StepLR step size.
+        lr_gamma:             StepLR decay factor.
 
     Returns:
-        The trained QuantumProtoNet (same object, mutated in-place).
+        The trained QuantumProtoNet (mutated in-place).
     """
     model.train()
     optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -68,25 +72,29 @@ def meta_train_qpn(
     for ep_idx, ep in enumerate(episodes):
         optimizer.zero_grad()
 
-        s_x = torch.tensor(ep.support_x, dtype=torch.float32)
-        q_x = torch.tensor(ep.query_x, dtype=torch.float32)
-        s_y = torch.tensor(ep.support_y, dtype=torch.long)
-        q_y = torch.tensor(ep.query_y, dtype=torch.long)
+        # Amplitude-encode support and query (mirroring few_rel's transform call)
+        s_x_enc = global_preprocessor.transform(ep.support_x)
+        q_x_enc = global_preprocessor.transform(ep.query_x)
 
-        # Real QPN forward: prototypes → distances → logits
-        logits = model(s_x, s_y, q_x)
+        # Map support labels to contiguous 0..N-1 (as few_rel does)
+        classes = list(np.unique(ep.support_y))
+        s_y_mapped = np.array([classes.index(int(y)) for y in ep.support_y])
+        q_y_mapped = np.array([classes.index(int(y)) for y in ep.query_y])
 
-        loss = loss_fn(logits, q_y)
+        s_x_t = torch.tensor(s_x_enc, dtype=torch.float32)
+        q_x_t = torch.tensor(q_x_enc, dtype=torch.float32)
+        s_y_t = torch.tensor(s_y_mapped, dtype=torch.long)
+        q_y_t = torch.tensor(q_y_mapped, dtype=torch.long)
+
+        logits = model(s_x_t, s_y_t, q_x_t)  # (Q, N)
+        loss = loss_fn(logits, q_y_t)
         loss.backward()
 
         optimizer.step()
         scheduler.step()
         total_loss += loss.item()
 
-        print(
-            f"  [Train] Ep {ep_idx + 1:3d}/{n_train_episodes} "
-            f"- Loss: {loss.item():.4f}"
-        )
+        print(f"  [Train] Ep {ep_idx + 1:3d}/{n_train_episodes} - Loss: {loss.item():.4f}")
 
     avg_loss = total_loss / n_train_episodes
     print(f"  => Meta-Training Complete. Avg Loss: {avg_loss:.4f}")

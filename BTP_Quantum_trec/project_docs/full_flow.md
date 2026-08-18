@@ -12,7 +12,7 @@ The script loads `config/config.yaml` and seeds all random number generators for
 
 ```
 Config loaded:
-  n_qubits         = 8
+  n_qubits         = 4
   n_features_lda   = 32
   QHBA agents      = 10, iterations = 30
   Training: 5-way 1-shot, 100 episodes
@@ -86,7 +86,7 @@ After LDA, the features are re-normalized to `[0, 1]`. LDA variance retained: ~9
 
 **Files:** `quantum/feature_selection/qhba.py`, `honey_badger_ops.py`, `quantum_oracle.py`
 
-We now have 32 features per question, but our quantum circuit only has **8 qubits** — meaning it can only process 8 features at a time. The **Quantum Honey Badger Algorithm (QHBA)** finds the best 8 out of 32.
+We now have 32 features per question, but our quantum circuit only has **4 qubits** — meaning it can only process 4 features at a time. The **Quantum Honey Badger Algorithm (QHBA)** finds the best 4 out of 32.
 
 ### How QHBA works:
 
@@ -98,19 +98,19 @@ QHBA is a **swarm intelligence** metaheuristic. 10 agents (like virtual honey ba
 2. **Honey Phase (50%)** — Exploitation: move toward the best known feature mask.
 3. **Badger Phase (50%)** — Exploration: make aggressive random moves to find better masks.
 4. **Fitness Evaluation** — Score each agent's feature mask using a **hybrid fitness**:
-   - **Quantum fitness (50%)**: Angle-encode the 8-feature position → shallow RealAmplitudes ansatz → measure → `1 - P(|00000000⟩)`. This rewards feature configurations that produce concentrated quantum measurement distributions.
+   - **Quantum fitness (50%)**: Angle-encode the 4-feature position → shallow RealAmplitudes ansatz → measure → `1 - P(|0000⟩)`. This rewards feature configurations that produce concentrated quantum measurement distributions.
    - **Classical fitness (50%)**: KNN cross-validation accuracy on the selected features. `(1 - accuracy) + 0.01 × (n_selected / 32)`.
 
 **After 30 iterations:**
 
 ```
-Best feature mask found: [0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, ...]
-Selected feature indices: [1, 4, 7, 9, 13, 15, 22, 27]   # 8 features
+Best feature mask found: [0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...]
+Selected feature indices: [1, 4, 7, 9]   # 4 features
 Best fitness: 0.183
-QHBA runtime: ~45 seconds (GPU) / ~8 minutes (CPU)
+QHBA runtime: ~20 seconds (GPU) / ~4 minutes (CPU)
 ```
 
-The 8 selected feature indices represent the LDA dimensions that are most discriminative for the 50 classes.
+The 4 selected feature indices represent the LDA dimensions that are most discriminative for the 50 classes.
 
 ---
 
@@ -148,24 +148,24 @@ Query Set (15 examples per class → 75 examples to classify):
 ### What happens inside each episode:
 
 #### Step 4a: Angle Encoding
-Each of the 5 support features `∈ [0,1]^8` is mapped to 8 qubit rotations:
+Each of the 5 support features `∈ [0,1]^4` is mapped to 4 qubit rotations:
 
 ```
-Feature x = [0.23, 0.67, 0.12, ...]
+Feature x = [0.23, 0.67, 0.12, 0.44]
 Circuit:   RY(π·0.23) on qubit 0
            RY(π·0.67) on qubit 1
            RY(π·0.12) on qubit 2
-           ...
+           RY(π·0.44) on qubit 3
 ```
 
-This produces a product state `|ψ(x)⟩ = |ψ₀⟩ ⊗ |ψ₁⟩ ⊗ ... ⊗ |ψ₇⟩`.
+This produces a product state `|ψ(x)⟩ = |ψ₀⟩ ⊗ |ψ₁⟩ ⊗ |ψ₂⟩ ⊗ |ψ₃⟩`.
 
 #### Step 4b: VQC Feature Extraction
-The `EfficientSU2` ansatz (2 layers, 8 qubits, 48 trainable parameters `θ`) is applied to the encoded state, creating entanglement between qubits and producing a rich quantum embedding:
+The `EfficientSU2` ansatz (2 layers, 4 qubits, 24 trainable parameters `θ`) is applied to the encoded state, creating entanglement between qubits and producing a rich quantum embedding:
 
 ```
 |ψ_out(x; θ)⟩  =  VQC(θ) · |ψ_encoded(x)⟩
-                =  256-dimensional complex state vector
+                =  16-dimensional complex state vector
 ```
 
 #### Step 4c: Prototype Calculation (Block 4)

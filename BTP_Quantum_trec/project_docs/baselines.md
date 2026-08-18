@@ -6,7 +6,7 @@ A research paper proposing a new method cannot make any claim without measuring 
 
 > *"Is the Quantum Prototypical Network (QPN) actually better than what already exists, and is that improvement statistically significant?"*
 
-All baselines in this project receive **the exact same 8 QHBA-selected features** as the QPN. This is the only way to guarantee that any performance difference is due to the model architecture (quantum vs. classical), not differences in input representation.
+All baselines in this project receive **the exact same 4 QHBA-selected features** as the QPN. This is the only way to guarantee that any performance difference is due to the model architecture (quantum vs. classical), not differences in input representation.
 
 All models are evaluated on **the same set of few-shot episodes**, drawn from the same `EpisodeSampler`. Per-episode accuracy scores are collected and compared using a **Wilcoxon signed-rank paired test** to determine statistical significance (p < 0.05).
 

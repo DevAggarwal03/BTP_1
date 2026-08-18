@@ -61,7 +61,7 @@ class QHBAConfig:
     c2: float = 0.5
     """Badger phase coefficient — controls exploration decay rate."""
 
-    n_qubits: int = 8
+    n_qubits: int = 4
     """Number of qubits for the quantum oracle."""
 
     shots: int = 1024

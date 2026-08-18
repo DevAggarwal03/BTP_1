@@ -220,3 +220,85 @@ class TRECPreprocessor:
             f"n_features_lda={self.n_features_lda}, "
             f"fitted={self._fitted})"
         )
+
+
+class QuantumFeaturePreprocessor:
+    """
+    Post-QHBA preprocessor: pads and L2-normalizes feature vectors for
+    Amplitude Encoding into a quantum state of ``2^n_qubits`` amplitudes.
+
+    This mirrors ``BTP_Quantum_few_rel/qpn/quantum/encoding.py``
+    (``QuantumFeaturePreprocessor`` with ``fm_kind='amplitude'``).
+
+    Pipeline:
+        1. Select the QHBA-chosen feature columns from the LDA matrix.
+        2. Zero-pad each row to ``state_dim = 2^n_qubits`` dimensions.
+        3. L2-normalize each row so it forms a valid quantum state vector.
+
+    Args:
+        n_qubits: Number of qubits for amplitude encoding.
+                  ``state_dim = 2^n_qubits`` must be >= number of QHBA features.
+    """
+
+    def __init__(self, n_qubits: int) -> None:
+        self.n_qubits = n_qubits
+        self.state_dim = 2 ** n_qubits
+        self.selected_indices: Optional[np.ndarray] = None
+        self._fitted = False
+
+    def fit(self, X: np.ndarray, qhba_indices: np.ndarray) -> "QuantumFeaturePreprocessor":
+        """
+        Store the QHBA-selected feature indices.
+
+        Args:
+            X:             Full LDA feature matrix ``(N, n_lda)``.
+            qhba_indices:  Integer array of QHBA-selected column indices.
+
+        Returns:
+            self (for chaining).
+        """
+        n_selected = len(qhba_indices)
+        if n_selected > self.state_dim:
+            raise ValueError(
+                f"QHBA selected {n_selected} features but state_dim={self.state_dim} "
+                f"(2^{self.n_qubits}). Increase n_qubits or reduce QHBA features."
+            )
+        self.selected_indices = np.asarray(qhba_indices, dtype=int)
+        self._fitted = True
+        return self
+
+    def transform(self, X: np.ndarray) -> np.ndarray:
+        """
+        Apply the preprocessing transform to a feature matrix.
+
+        Args:
+            X: LDA feature matrix ``(N, n_lda)``.
+
+        Returns:
+            Amplitude-ready matrix ``(N, state_dim)``, L2-normalized row-wise.
+
+        Raises:
+            RuntimeError: If ``fit`` has not been called yet.
+        """
+        if not self._fitted:
+            raise RuntimeError(
+                "QuantumFeaturePreprocessor not fitted. Call fit() first."
+            )
+        X_selected = X[:, self.selected_indices]                  # (N, n_sel)
+        padded = np.zeros((X_selected.shape[0], self.state_dim), dtype=np.float32)
+        padded[:, : X_selected.shape[1]] = X_selected            # zero-pad to state_dim
+        norms = np.linalg.norm(padded, axis=1, keepdims=True)
+        norms[norms == 0] = 1.0                                   # guard against zero vectors
+        return (padded / norms).astype(np.float32)
+
+    def fit_transform(self, X: np.ndarray, qhba_indices: np.ndarray) -> np.ndarray:
+        """Convenience method: fit then transform in one call."""
+        return self.fit(X, qhba_indices).transform(X)
+
+    def __repr__(self) -> str:
+        return (
+            f"QuantumFeaturePreprocessor("
+            f"n_qubits={self.n_qubits}, "
+            f"state_dim={self.state_dim}, "
+            f"fitted={self._fitted})"
+        )

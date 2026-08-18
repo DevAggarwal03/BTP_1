@@ -31,12 +31,12 @@ class QuantumPrototypeCalculator:
 
     def __init__(self, num_qubits: int) -> None:
         self.num_qubits = num_qubits
-        if num_qubits > 10:
+        if num_qubits > 6:
             import warnings
             warnings.warn(
                 f"Density matrix for {num_qubits} qubits is "
                 f"{2**num_qubits}×{2**num_qubits} = {4**num_qubits} elements. "
-                "Keep n_qubits ≤ 8 for reasonable memory usage.",
+                "Keep n_qubits ≤ 6 for reasonable memory usage (default is 4).",
                 ResourceWarning,
                 stacklevel=2,
             )

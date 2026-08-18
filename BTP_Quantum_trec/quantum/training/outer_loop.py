@@ -43,7 +43,7 @@ class QPNMasterTrainer:
         self,
         n_features: int,
         epochs_per_eval: int = 2,
-        n_qubits: int = 8,
+        n_qubits: int = 4,
         learning_rate: float = 0.01,
         n_way: int = 5,
         k_shot: int = 1,

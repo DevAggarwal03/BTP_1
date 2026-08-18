@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
-from typing import List
+from typing import List, Any
 
 class QuantumSpaceVisualizer:
     """

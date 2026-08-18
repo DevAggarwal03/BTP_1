@@ -7,7 +7,7 @@ This document outlines the performance bottlenecks identified in the original `B
 ## 1. Vectorized Density Matrix Prototyping (Block 4)
 
 **The Problem:**
-In the original implementation, `QuantumPrototypeCalculator` averaged the pure `Statevector` representations to create a mixed-state Density Matrix. This was done using a double `for` loop in Python over the matrix dimensions (e.g., `256x256` for 8 qubits). For every class prototype, this required `65,536` native Python iterations. In an episodic training loop sampling hundreds of episodes, this became an immense CPU bottleneck.
+In the original implementation, `QuantumPrototypeCalculator` averaged the pure `Statevector` representations to create a mixed-state Density Matrix. This was done using a double `for` loop in Python over the matrix dimensions (e.g., `16x16` for 4 qubits). For every class prototype, this required `256` native Python iterations. In an episodic training loop sampling hundreds of episodes, this became an immense CPU bottleneck.
 
 **The Solution:**
 The loop was entirely removed and replaced with a vectorized NumPy operation in `quantum/prototype_calculation/prototype_ops.py`.

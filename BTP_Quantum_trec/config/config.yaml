@@ -5,12 +5,15 @@ data:
   cache_dir: "data/cache"
 
 quantum:
-  n_qubits: 8                   # QHBA selects 8 from 32 LDA features
+  n_qubits: 8                   # Amplitude encoding: 2^8 = 256-dim state space
   shots: 1024                   # Measurement shots per oracle call
+  fm_kind: "amplitude"          # Encoding strategy: 'amplitude' (matches few_rel)
+  cost_type: "global"           # Fidelity cost: 'global' or 'local'
+  init_type: "identity_block"   # VQC init: 'identity_block' (zeros), 'random', 'uniform'
 
 qhba:
-  n_agents: 10                  # Population size
-  max_iter: 30                  # Maximum iterations
+  n_agents: 30                  # Population size (matching few_rel's QCHBA)
+  max_iter: 100                 # Maximum iterations (matching few_rel's QCHBA)
   c1: 0.5                       # Honey phase coefficient (exploitation)
   c2: 0.5                       # Badger phase coefficient (exploration)
   use_quantum_oracle: true      # Toggle quantum vs classical-only fitness
@@ -19,14 +22,13 @@ training:
   n_way: 5
   k_shot: 1
   n_query: 15
-  n_episodes: 100
-  learning_rate: 0.01
+  n_episodes: 100               # Full training run (was 10 demo mode)
+  learning_rate: 0.05           # Matching few_rel's lr=0.05
   lr_step_size: 15
   lr_gamma: 0.5
-  temperature: 1.0
 
 evaluation:
   n_way: 5
   k_shot: 1
   n_query: 15
-  n_episodes: 300
+  n_episodes: 300               # Full evaluation (matching few_rel's benchmark)

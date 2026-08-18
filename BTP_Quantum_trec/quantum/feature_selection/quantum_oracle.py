@@ -67,7 +67,7 @@ class QuantumOracle:
 
     def __init__(
         self,
-        n_qubits: int = 8,
+        n_qubits: int = 4,
         shots: int = 1024,
         seed: int = 42,
     ) -> None:

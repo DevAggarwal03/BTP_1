@@ -78,7 +78,7 @@ Parameter-Shift Gradients → Adam Optimizer updates θ
 ```python
 # Pseudocode for meta_train_qpn()
 
-model = QuantumProtoNet(n_qubits=8, ...)
+model = QuantumProtoNet(n_qubits=4, ...)
 optimizer = Adam(model.parameters(), lr=0.01)
 scheduler = StepLR(optimizer, step_size=15, gamma=0.5)
 

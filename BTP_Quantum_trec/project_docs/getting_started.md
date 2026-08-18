@@ -79,7 +79,7 @@ data:
   cache_dir: "data/cache"
 
 quantum:
-  n_qubits: 8                    # QHBA selects 8 from 32 LDA features
+  n_qubits: 4                    # QHBA selects 4 from 32 LDA features
   shots: 1024                    # Measurement shots per oracle call
 
 qhba:

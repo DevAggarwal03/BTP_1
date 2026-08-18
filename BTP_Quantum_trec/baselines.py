@@ -22,7 +22,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics.pairwise import euclidean_distances
 
 from data.episode_sampler import EpisodeSampler, Episode
-from quantum.encoding.angle_encoding import AngleEncoder
 
 from qiskit_machine_learning.kernels import FidelityQuantumKernel
 from qiskit_machine_learning.algorithms import QSVC
@@ -101,18 +100,13 @@ class QuantumKernelBaseline:
     Evaluates exact statevector fidelity (no shots).
     """
 
-    def __init__(self, n_qubits: int = 8) -> None:
-        self.n_qubits = min(n_qubits, 10)  # limit size
+    def __init__(self, n_qubits: int = 4) -> None:
+        self.n_qubits = min(n_qubits, 10)  # limit for simulation feasibility
 
-        # Angle Encoding feature map
-        self.feature_map = AngleEncoder(self.n_qubits).encode(
-            np.zeros(self.n_qubits)
-        )
-        # However, FidelityQuantumKernel needs a parameterized circuit.
-        # So we build a parameterized AngleEncoder here:
         from qiskit.circuit import ParameterVector
         from qiskit import QuantumCircuit
-        
+
+        # Build a parameterized angle-encoding feature map for FidelityQuantumKernel
         self.params = ParameterVector("x", self.n_qubits)
         qc = QuantumCircuit(self.n_qubits)
         for i, p in enumerate(self.params):
@@ -124,6 +118,7 @@ class QuantumKernelBaseline:
         self.qkernel = FidelityQuantumKernel(
             feature_map=self.feature_map, fidelity=self.fidelity
         )
+
 
     def predict(self, episode: Episode) -> np.ndarray:
         qsvc = QSVC(quantum_kernel=self.qkernel)
