@@ -1,0 +1,168 @@
+{
+  "seeds": [
+    7,
+    17,
+    27
+  ],
+  "distances": [
+    "euclidean",
+    "cosine"
+  ],
+  "output_dim": 8,
+  "compression_hidden_dim": 64,
+  "compression_mode": "mlp",
+  "train_episodes": 600,
+  "validation_episodes": 600,
+  "optimizer": {
+    "name": "Adam",
+    "learning_rate": 0.001,
+    "weight_decay": 1e-05
+  },
+  "episode_config": {
+    "n_way": 5,
+    "k_shot": 1,
+    "q_queries": 15
+  },
+  "data": {
+    "data_directory": "/Users/devaggarwal/BTP/BTP_combined/BTP_Quantum_few_rel/data",
+    "source_files": {
+      "train": "/Users/devaggarwal/BTP/BTP_combined/BTP_Quantum_few_rel/data/train_embeddings.npz",
+      "val": "/Users/devaggarwal/BTP/BTP_combined/BTP_Quantum_few_rel/data/val_embeddings.npz"
+    },
+    "sentence_encoder": "sentence-transformers/all-MiniLM-L6-v2 (frozen cached embeddings)",
+    "embeddings_normalized": false,
+    "entity_markers": "[H]...[/H] and [T]...[/T] per Implementation Context",
+    "splits": {
+      "train": {
+        "relations": 64,
+        "examples": 44800,
+        "embedding_dimensions": [
+          384
+        ],
+        "examples_per_relation_min": 700,
+        "examples_per_relation_max": 700
+      },
+      "val": {
+        "relations": 16,
+        "examples": 11200,
+        "embedding_dimensions": [
+          384
+        ],
+        "examples_per_relation_min": 700,
+        "examples_per_relation_max": 700
+      }
+    }
+  },
+  "records": [
+    {
+      "model": "classical_euclidean",
+      "distance": "euclidean",
+      "seed": 7,
+      "output_dim": 8,
+      "train_episodes": 600,
+      "validation_episodes": 600,
+      "accuracy_mean": 0.5956222222222223,
+      "accuracy_95ci": 0.00988184356439461,
+      "weighted_f1_mean": 0.5704391332098883,
+      "weighted_f1_95ci": 0.010610034691547749,
+      "last_train_loss": 1.2252233028411865,
+      "checkpoint": "New_Go_implementation/results/bug_fix_rerun_20260928/baseline_checkpoints/euclidean_seed_7.pt"
+    },
+    {
+      "model": "classical_euclidean",
+      "distance": "euclidean",
+      "seed": 17,
+      "output_dim": 8,
+      "train_episodes": 600,
+      "validation_episodes": 600,
+      "accuracy_mean": 0.6057555555555556,
+      "accuracy_95ci": 0.010046698090302807,
+      "weighted_f1_mean": 0.5806493555147205,
+      "weighted_f1_95ci": 0.010737989050907434,
+      "last_train_loss": 1.1241347789764404,
+      "checkpoint": "New_Go_implementation/results/bug_fix_rerun_20260928/baseline_checkpoints/euclidean_seed_17.pt"
+    },
+    {
+      "model": "classical_euclidean",
+      "distance": "euclidean",
+      "seed": 27,
+      "output_dim": 8,
+      "train_episodes": 600,
+      "validation_episodes": 600,
+      "accuracy_mean": 0.5771777777777779,
+      "accuracy_95ci": 0.009703787249912804,
+      "weighted_f1_mean": 0.5513285594996369,
+      "weighted_f1_95ci": 0.010191732814733854,
+      "last_train_loss": 0.4923969507217407,
+      "checkpoint": "New_Go_implementation/results/bug_fix_rerun_20260928/baseline_checkpoints/euclidean_seed_27.pt"
+    },
+    {
+      "model": "classical_cosine",
+      "distance": "cosine",
+      "seed": 7,
+      "output_dim": 8,
+      "train_episodes": 600,
+      "validation_episodes": 600,
+      "accuracy_mean": 0.6039333333333333,
+      "accuracy_95ci": 0.01044722222594,
+      "weighted_f1_mean": 0.5712546014340626,
+      "weighted_f1_95ci": 0.011127381000081227,
+      "last_train_loss": 1.4185246229171753,
+      "checkpoint": "New_Go_implementation/results/bug_fix_rerun_20260928/baseline_checkpoints/cosine_seed_7.pt"
+    },
+    {
+      "model": "classical_cosine",
+      "distance": "cosine",
+      "seed": 17,
+      "output_dim": 8,
+      "train_episodes": 600,
+      "validation_episodes": 600,
+      "accuracy_mean": 0.5882444444444445,
+      "accuracy_95ci": 0.010074029773788629,
+      "weighted_f1_mean": 0.5580425050059216,
+      "weighted_f1_95ci": 0.010513550685742291,
+      "last_train_loss": 1.2407491207122803,
+      "checkpoint": "New_Go_implementation/results/bug_fix_rerun_20260928/baseline_checkpoints/cosine_seed_17.pt"
+    },
+    {
+      "model": "classical_cosine",
+      "distance": "cosine",
+      "seed": 27,
+      "output_dim": 8,
+      "train_episodes": 600,
+      "validation_episodes": 600,
+      "accuracy_mean": 0.5902000000000001,
+      "accuracy_95ci": 0.010039665848034814,
+      "weighted_f1_mean": 0.556834867491681,
+      "weighted_f1_95ci": 0.01060241859642694,
+      "last_train_loss": 1.026707410812378,
+      "checkpoint": "New_Go_implementation/results/bug_fix_rerun_20260928/baseline_checkpoints/cosine_seed_27.pt"
+    }
+  ],
+  "aggregates": [
+    {
+      "model": "classical_cosine",
+      "seeds": [
+        7,
+        17,
+        27
+      ],
+      "accuracy_mean_across_seeds": 0.594125925925926,
+      "accuracy_std_across_seeds": 0.008549560188914274,
+      "weighted_f1_mean_across_seeds": 0.562043991310555,
+      "weighted_f1_std_across_seeds": 0.00799944380734655
+    },
+    {
+      "model": "classical_euclidean",
+      "seeds": [
+        7,
+        17,
+        27
+      ],
+      "accuracy_mean_across_seeds": 0.5928518518518519,
+      "accuracy_std_across_seeds": 0.014488911610979642,
+      "weighted_f1_mean_across_seeds": 0.5674723494080819,
+      "weighted_f1_std_across_seeds": 0.014883837688396486
+    }
+  ]
+}

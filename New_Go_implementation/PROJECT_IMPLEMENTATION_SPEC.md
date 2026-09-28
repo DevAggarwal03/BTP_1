@@ -6,7 +6,7 @@ This document is the implementation specification for a new FewRel experiment ba
 
 It is written for an implementation LLM or software engineer. It defines what the project is intended to do, how the model should be organized, how training and evaluation should work, what must be tested, and which previous design mistakes must not be repeated.
 
-The previous exploratory implementation is located at `/Users/devaggarwal/BTP/BTP_combined/BTP_Quantum_few_rel`. It was useful for exploration, but it must not be silently treated as the final architecture. The clean implementation defined by this specification must live under `/Users/devaggarwal/BTP/BTP_combined/New_Go_implementation` and must remain separate from the old implementation until it has passed the required checks.
+The previous exploratory implementation is located at `/Users/devaggarwal/BTP/BTP_combined/BTP_Quantum_few_rel`. The earlier PyTorch-simulator implementation is located at `/Users/devaggarwal/BTP/BTP_combined/New_Go_implementation`. The Qiskit implementation defined by this specification must live under `/Users/devaggarwal/BTP/BTP_combined/New_Plus_Qiskit_Implementation` and remain separate from both prior implementations.
 
 ## Mandatory clarification rule
 
@@ -20,7 +20,7 @@ Material ambiguities include, but are not limited to:
 - whether the new implementation should use the existing `qpn/` package or a new package;
 - the target number of qubits;
 - the target encoding or circuit depth;
-- whether training should use exact statevector simulation or shot-based simulation;
+- whether training should use exact statevector simulation or shot-based simulation (resolved here as exact Qiskit statevector simulation);
 - whether QCHBA should be part of the main model or only an ablation;
 - the number of training episodes, evaluation episodes, and random seeds;
 - whether a final DOCX, notebook, Python package, or all three are required;
@@ -28,6 +28,8 @@ Material ambiguities include, but are not limited to:
 - any request that could change the scientific claim of the project.
 
 The implementation may proceed only after the ambiguity has been resolved by the user.
+
+For this implementation, the user has resolved the simulator choice: use Qiskit's exact statevector Estimator with shots disabled. PyTorch remains responsible for the classical network, loss, and optimizer integration; it must not simulate quantum gates or statevectors.
 
 ## 1. Project definition
 
@@ -55,10 +57,9 @@ The main pipeline is:
 FewRel text
   -> frozen Sentence-BERT embedding
   -> small classical compression network
-  -> input-dependent trainable quantum encoder
-  -> quantum state for each example
-  -> relation prototype from support states
-  -> query-prototype fidelity scores
+  -> Qiskit exact statevector simulation
+  -> support/query fidelities by compute-uncompute
+  -> scores equal to fidelity against empirical density-matrix prototypes
   -> episodic classification loss
   -> update classical and quantum parameters
 ```
@@ -74,7 +75,7 @@ The main architecture should use:
 7. The same prototype and fidelity objective during training and evaluation.
 8. Episodic training on training relations and evaluation on unseen validation relations.
 
-The first implementation should use four qubits for development and debugging. An eight-qubit configuration may be added after the four-qubit version has passed all correctness tests.
+The first implementation should use four qubits for development and debugging. An eight-qubit configuration may be added after the four-qubit version has passed all correctness tests. PyTorch must not be used as a quantum simulator.
 
 ## 3. Main architecture flowchart
 
@@ -82,15 +83,13 @@ The first implementation should use four qubits for development and debugging. A
 flowchart LR
     A["FewRel text"] --> B["Frozen Sentence-BERT\n384-dimensional embedding"]
     B --> C["Classical compression\nLayerNorm -> Linear -> GELU -> Linear"]
-    C --> D["Input-dependent quantum encoder\nangle encoding + data re-uploading"]
-    D --> E["Quantum state per example"]
-    E --> F["Support-set relation prototypes"]
-    E --> G["Query states"]
-    F --> H["Fidelity-based classifier"]
-    G --> H
-    H --> I["Episodic cross-entropy loss"]
-    I -. "update" .-> C
-    I -. "update" .-> D
+    C --> D["Parameterized Qiskit circuit\nangle encoding + data re-uploading"]
+    D --> E["Exact statevector Estimator\ncompute-uncompute fidelity"]
+    E --> F["Average pair scores by support class"]
+    F --> G["Fidelity-based classifier"]
+    G --> H["Episodic cross-entropy loss"]
+    H -. "update" .-> C
+    H -. "update" .-> D
 ```
 
 ## 4. Data and NLP representation
@@ -215,26 +214,25 @@ Example for four qubits:
 
 The quantum circuit must depend on both the compressed input and the trainable parameters.
 
-The recommended structure is:
+The recommended Qiskit circuit uses `n_qubits` qubits and the following order:
 
 ```text
-angle encoding of input
-  -> trainable RY/RZ rotations
-  -> entangling gates
-  -> angle encoding of input again
-  -> trainable RY/RZ rotations
-  -> entangling gates
+initial RY angle encoding of input
+  -> for each trainable repetition:
+       trainable RY/RZ rotations
+       circular CNOT entanglement
+       RY re-uploading of the input
 ```
 
 This is called data re-uploading.
 
-The implementation must not consist only of:
+Every trainable block must be followed by a later input-dependent operation. The implementation must not consist only of:
 
 ```text
 input encoding -> one common trainable unitary -> fidelity
 ```
 
-That structure makes full-state fidelity invariant to the common unitary and prevents the trainable circuit from changing the global similarity.
+That structure makes full-state fidelity invariant to the common unitary and prevents the trainable circuit from changing the global similarity. In particular, do not put trainable rotations after the last data re-upload: they would form a common final unitary and receive zero gradient from fidelity.
 
 ### 6.3 Circuit size
 
@@ -256,6 +254,14 @@ The implementation must record:
 - number of trainable quantum parameters;
 - whether the circuit is simulated exactly or with finite shots.
 
+### 6.4 Qiskit simulator and differentiable fidelity
+
+Use Qiskit's parameterized `QuantumCircuit` and exact statevector Estimator. The reference Estimator must be configured with `shots=None`; the main experiment has no sampling noise. Use `EstimatorQNN` and `TorchConnector` with `input_gradients=True` so gradients reach both the compression network and circuit inputs. The default Qiskit Machine Learning parameter-shift gradient must be checked against finite differences on the actual episodic loss.
+
+For a query state and one support state, simulate the compute-uncompute circuit `U(s, theta)^dagger U(q, theta)` and evaluate the all-zero projector. Its exact expectation is `|<psi_s(theta)|psi_q(theta)>|^2`. For multiple support examples, average those exact pairwise fidelities within each class. This is algebraically identical to `<psi_q|rho_c|psi_q>` for the equal-weight density-matrix prototype, while avoiding a non-differentiable conversion of Qiskit statevectors into NumPy arrays.
+
+The tested compatibility target is `qiskit>=1.1,<1.2` with `qiskit-machine-learning>=0.7.2,<0.8`, whose V1 reference Estimator is exact when `shots=None`. Do not switch silently to finite-shot sampling, a noisy backend, or a different primitive API. Any backend or major-version change requires state, fidelity, gradient, and episode-level equivalence checks before use.
+
 ## 7. Quantum prototypes
 
 ### 7.1 Support-set prototype
@@ -272,7 +278,7 @@ Use the density-matrix mixture:
 rho_k = (1/m) * sum_i |psi_ki><psi_ki|
 ```
 
-This is a valid density matrix when the individual states are normalized.
+This is a valid density matrix when the individual states are normalized. The Qiskit implementation may evaluate its query fidelity through the mathematically identical mean of exact compute-uncompute pairwise fidelities; it need not export statevectors or materialize the matrix in PyTorch.
 
 ### 7.2 One-shot episodes
 
@@ -315,6 +321,8 @@ For a pure query and a mixed prototype:
 ```text
 F(|q>, rho_k) = <q|rho_k|q>
 ```
+
+In the Qiskit implementation, calculate the same score as the mean support/query pure-state fidelity. Do not replace the exact all-zero probability with sampled measurement counts.
 
 The predicted class is the relation with the highest fidelity.
 
@@ -449,11 +457,7 @@ These are recommendations, not fixed scientific conclusions. The final episode c
 
 The classical compression network may use ordinary automatic differentiation.
 
-The quantum circuit may use:
-
-- a validated parameter-shift rule;
-- an exact simulator differentiation method;
-- another method that is explicitly tested against finite differences.
+The quantum circuit must be simulated by Qiskit. Use Qiskit Machine Learning's differentiable estimator integration (`EstimatorQNN` plus `TorchConnector`) with `input_gradients=True` and the parameter-shift gradient, or another Qiskit-supported differentiable method that is explicitly tested against finite differences. PyTorch autograd is used to connect gradients through the classical compression network; PyTorch must not implement quantum gate evolution or statevector simulation.
 
 Before large experiments, the implementation must verify that:
 
@@ -490,15 +494,17 @@ The following claims are not allowed without new evidence:
 
 The implementation should separate reusable code from notebooks and experiment scripts.
 
-For this implementation, the user confirmed exact statevector simulation. The
-initial backend therefore uses a small differentiable PyTorch statevector
-simulator. It is exact up to floating-point arithmetic and is not a claim about
-quantum-hardware runtime or hardware noise.
+For this implementation, the user confirmed exact Qiskit statevector
+simulation. The Qiskit reference Estimator runs parameterized circuits exactly
+with shots disabled. The `TorchConnector` carries the Qiskit Machine Learning
+gradients into the classical PyTorch network; PyTorch is not the quantum
+simulator. The implementation is not a claim about quantum-hardware runtime or
+hardware noise.
 
 Recommended structure:
 
 ```text
-New_Go_implementation/
+New_Plus_Qiskit_Implementation/
 ├── qpn_hybrid/
 │   ├── __init__.py
 │   ├── config.py
@@ -547,9 +553,9 @@ New_Go_implementation/
 └── PROJECT_IMPLEMENTATION_SPEC.md
 ```
 
-The new implementation package is `qpn_hybrid/` inside `New_Go_implementation/`.
+The new implementation package is `qpn_hybrid/` inside `New_Plus_Qiskit_Implementation/`.
 
-The old implementation at `/Users/devaggarwal/BTP/BTP_combined/BTP_Quantum_few_rel/qpn/` must not be overwritten or used as the default implementation for this project. If the user later wants the old package refactored instead of using the new package, ask first.
+Neither prior implementation may be overwritten or used as the default implementation for this project. The Qiskit package must use the existing embedding caches only as data inputs, with their provenance recorded; it must not import simulator code from either prior package.
 
 ## 13. Baseline and fairness requirements
 
@@ -648,11 +654,10 @@ The tests must verify mathematical behavior, not only that functions run.
 
 ### Quantum state tests
 
-- every state has norm one;
-- fidelity lies between zero and one;
-- density matrices have trace one;
-- density matrices are positive semidefinite;
-- one-shot prototypes are valid pure-state density matrices.
+- Qiskit's exact Estimator with `shots=None` agrees with a direct Qiskit `Statevector` reference;
+- compute-uncompute scores agree with direct statevector overlap for one-shot and multi-shot support sets;
+- fidelity lies between zero and one within numerical tolerance;
+- the tested circuits contain no measurements or noise model.
 
 ### Objective tests
 
@@ -667,6 +672,7 @@ The tests must verify mathematical behavior, not only that functions run.
 - gradients are tested away from zero initialization as well as at initialization;
 - the test rejects numerical residues such as `1e-16` as meaningful gradients;
 - both compression and quantum parameters receive gradients.
+- parameter-shift gradients of the actual episodic cross-entropy agree with finite differences for input angles and every trainable circuit repetition.
 
 ### Benchmark tests
 
@@ -749,8 +755,8 @@ Implementation should proceed in this order:
 3. Create the new package or branch agreed with the user.
 4. Implement data loading and episode tests.
 5. Implement and test the compression network.
-6. Implement a single input-dependent quantum circuit.
-7. Verify one support/query fidelity calculation.
+6. Implement the parameterized Qiskit circuit and exact compute-uncompute EstimatorQNN.
+7. Verify one support/query fidelity against direct Qiskit Statevector overlap.
 8. Verify one 5-way 1-shot episode manually.
 9. Verify gradients against finite differences.
 10. Implement the training loop.
@@ -767,7 +773,7 @@ At every stage, stop and ask the user if the next implementation decision is not
 The implementation is ready for the main experiment only when:
 
 - the compression layer produces the intended number of quantum inputs;
-- the quantum circuit output changes when its parameters change;
+- the quantum fidelity changes when every trainable circuit repetition changes;
 - quantum gradients agree with finite differences;
 - training and evaluation use the same prototype objective;
 - train and validation relations are separated;

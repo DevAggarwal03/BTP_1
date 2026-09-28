@@ -1,0 +1,191 @@
+{
+  "seeds": [
+    7,
+    17,
+    27
+  ],
+  "qubits": [
+    4,
+    8
+  ],
+  "train_episodes": 600,
+  "validation_episodes": 600,
+  "optimizer": {
+    "name": "Adam",
+    "learning_rate": 0.001,
+    "weight_decay": 1e-05
+  },
+  "episode_config": {
+    "n_way": 5,
+    "k_shot": 1,
+    "q_queries": 15
+  },
+  "data": {
+    "data_directory": "/Users/devaggarwal/BTP/BTP_combined/BTP_Quantum_few_rel/data",
+    "source_files": {
+      "train": "/Users/devaggarwal/BTP/BTP_combined/BTP_Quantum_few_rel/data/train_embeddings.npz",
+      "val": "/Users/devaggarwal/BTP/BTP_combined/BTP_Quantum_few_rel/data/val_embeddings.npz"
+    },
+    "sentence_encoder": "sentence-transformers/all-MiniLM-L6-v2 (frozen cached embeddings)",
+    "embeddings_normalized": false,
+    "entity_markers": "[H]...[/H] and [T]...[/T] per Implementation Context",
+    "splits": {
+      "train": {
+        "relations": 64,
+        "examples": 44800,
+        "embedding_dimensions": [
+          384
+        ],
+        "examples_per_relation_min": 700,
+        "examples_per_relation_max": 700
+      },
+      "val": {
+        "relations": 16,
+        "examples": 11200,
+        "embedding_dimensions": [
+          384
+        ],
+        "examples_per_relation_min": 700,
+        "examples_per_relation_max": 700
+      }
+    }
+  },
+  "model_configs": {
+    "4": {
+      "embedding_dim": 384,
+      "compression_hidden_dim": 64,
+      "n_qubits": 4,
+      "quantum_reps": 2,
+      "compression_mode": "mlp",
+      "beta_init": 10.0
+    },
+    "8": {
+      "embedding_dim": 384,
+      "compression_hidden_dim": 64,
+      "n_qubits": 8,
+      "quantum_reps": 2,
+      "compression_mode": "mlp",
+      "beta_init": 10.0
+    }
+  },
+  "quantum_simulation_by_qubit": {
+    "4": {
+      "simulator": "PyTorch exact statevector (complex128)",
+      "shots": null,
+      "n_qubits": 4,
+      "repetitions": 2,
+      "trainable_quantum_parameters": 16,
+      "gate_schedule": "initial input RY encoding; for each repetition: trainable per-qubit RY/RZ, circular CNOT, input RY re-upload",
+      "entanglement": "directed circular CNOT i -> (i + 1) mod n_qubits"
+    },
+    "8": {
+      "simulator": "PyTorch exact statevector (complex128)",
+      "shots": null,
+      "n_qubits": 8,
+      "repetitions": 2,
+      "trainable_quantum_parameters": 32,
+      "gate_schedule": "initial input RY encoding; for each repetition: trainable per-qubit RY/RZ, circular CNOT, input RY re-upload",
+      "entanglement": "directed circular CNOT i -> (i + 1) mod n_qubits"
+    }
+  },
+  "records": [
+    {
+      "seed": 7,
+      "n_qubits": 4,
+      "train_episodes": 600,
+      "validation_episodes": 600,
+      "accuracy_mean": 0.46384444444444445,
+      "accuracy_95ci": 0.00868169799300319,
+      "weighted_f1_mean": 0.4425200039116864,
+      "weighted_f1_95ci": 0.00861975763751399,
+      "last_train_loss": 1.7268942154656841,
+      "checkpoint": "New_Go_implementation/results/bug_fix_rerun_20260928/multi_seed_checkpoints/4qubit_seed_7.pt"
+    },
+    {
+      "seed": 17,
+      "n_qubits": 4,
+      "train_episodes": 600,
+      "validation_episodes": 600,
+      "accuracy_mean": 0.39895555555555556,
+      "accuracy_95ci": 0.008224130839033658,
+      "weighted_f1_mean": 0.3829252158905724,
+      "weighted_f1_95ci": 0.008057114780362718,
+      "last_train_loss": 1.7383074555618558,
+      "checkpoint": "New_Go_implementation/results/bug_fix_rerun_20260928/multi_seed_checkpoints/4qubit_seed_17.pt"
+    },
+    {
+      "seed": 27,
+      "n_qubits": 4,
+      "train_episodes": 600,
+      "validation_episodes": 600,
+      "accuracy_mean": 0.4124666666666667,
+      "accuracy_95ci": 0.007973202901330259,
+      "weighted_f1_mean": 0.3950727888489319,
+      "weighted_f1_95ci": 0.007862259004769265,
+      "last_train_loss": 1.205623141540058,
+      "checkpoint": "New_Go_implementation/results/bug_fix_rerun_20260928/multi_seed_checkpoints/4qubit_seed_27.pt"
+    },
+    {
+      "seed": 7,
+      "n_qubits": 8,
+      "train_episodes": 600,
+      "validation_episodes": 600,
+      "accuracy_mean": 0.5999777777777778,
+      "accuracy_95ci": 0.010176163904060521,
+      "weighted_f1_mean": 0.5693030883864348,
+      "weighted_f1_95ci": 0.010808013282752915,
+      "last_train_loss": 1.0571749365331125,
+      "checkpoint": "New_Go_implementation/results/bug_fix_rerun_20260928/multi_seed_checkpoints/8qubit_seed_7.pt"
+    },
+    {
+      "seed": 17,
+      "n_qubits": 8,
+      "train_episodes": 600,
+      "validation_episodes": 600,
+      "accuracy_mean": 0.6082222222222222,
+      "accuracy_95ci": 0.010142199280073923,
+      "weighted_f1_mean": 0.5802497825145139,
+      "weighted_f1_95ci": 0.010791524142251145,
+      "last_train_loss": 1.3873687567101862,
+      "checkpoint": "New_Go_implementation/results/bug_fix_rerun_20260928/multi_seed_checkpoints/8qubit_seed_17.pt"
+    },
+    {
+      "seed": 27,
+      "n_qubits": 8,
+      "train_episodes": 600,
+      "validation_episodes": 600,
+      "accuracy_mean": 0.5805555555555555,
+      "accuracy_95ci": 0.00993292420489385,
+      "weighted_f1_mean": 0.5539263439753616,
+      "weighted_f1_95ci": 0.010337461333171207,
+      "last_train_loss": 0.6741560346723167,
+      "checkpoint": "New_Go_implementation/results/bug_fix_rerun_20260928/multi_seed_checkpoints/8qubit_seed_27.pt"
+    }
+  ],
+  "aggregates": [
+    {
+      "n_qubits": 4,
+      "seeds": [
+        7,
+        17,
+        27
+      ],
+      "accuracy_mean_across_seeds": 0.4250888888888889,
+      "accuracy_std_across_seeds": 0.03423641841196318,
+      "weighted_f1_mean_across_seeds": 0.40683933621706353,
+      "weighted_f1_std_across_seeds": 0.031491640439095
+    },
+    {
+      "n_qubits": 8,
+      "seeds": [
+        7,
+        17,
+        27
+      ],
+      "accuracy_mean_across_seeds": 0.5962518518518519,
+      "accuracy_std_across_seeds": 0.014204682471467904,
+      "weighted_f1_mean_across_seeds": 0.5678264049587701,
+      "weighted_f1_std_across_seeds": 0.01322370218926179
+    }
+  ]
+}

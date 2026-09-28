@@ -1,4 +1,8 @@
-# Improvement TODO
+# Historical Torch-simulator improvement notes
+
+The results and unfinished ideas in this file belong to the earlier PyTorch
+statevector implementation. They are not Qiskit benchmark results. The active
+Qiskit work plan is in `../New_Plus_Qiskit_Implementation/improvements.md`.
 
 This file tracks the planned improvements for the hybrid classical--quantum
 FewRel model. The current 8-qubit model averages about 59% accuracy across

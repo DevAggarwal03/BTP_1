@@ -1,0 +1,121 @@
+{
+  "n_qubits": 8,
+  "model_config": {
+    "embedding_dim": 384,
+    "compression_hidden_dim": 64,
+    "n_qubits": 8,
+    "quantum_reps": 2,
+    "compression_mode": "mlp",
+    "beta_init": 10.0
+  },
+  "quantum_simulation": {
+    "simulator": "PyTorch exact statevector (complex128)",
+    "shots": null,
+    "n_qubits": 8,
+    "repetitions": 2,
+    "trainable_quantum_parameters": 32,
+    "gate_schedule": "initial input RY encoding; for each repetition: trainable per-qubit RY/RZ, circular CNOT, input RY re-upload",
+    "entanglement": "directed circular CNOT i -> (i + 1) mod n_qubits"
+  },
+  "seeds": [
+    7
+  ],
+  "train_episodes": [
+    2000
+  ],
+  "learning_rates": [
+    0.0003,
+    0.001,
+    0.003
+  ],
+  "optimizer": {
+    "name": "Adam",
+    "weight_decay": 1e-05
+  },
+  "validation_episodes": 600,
+  "episode_config": {
+    "n_way": 5,
+    "k_shot": 1,
+    "q_queries": 15
+  },
+  "data": {
+    "data_directory": "/Users/devaggarwal/BTP/BTP_combined/BTP_Quantum_few_rel/data",
+    "source_files": {
+      "train": "/Users/devaggarwal/BTP/BTP_combined/BTP_Quantum_few_rel/data/train_embeddings.npz",
+      "val": "/Users/devaggarwal/BTP/BTP_combined/BTP_Quantum_few_rel/data/val_embeddings.npz"
+    },
+    "sentence_encoder": "sentence-transformers/all-MiniLM-L6-v2 (frozen cached embeddings)",
+    "embeddings_normalized": false,
+    "entity_markers": "[H]...[/H] and [T]...[/T] per Implementation Context",
+    "splits": {
+      "train": {
+        "relations": 64,
+        "examples": 44800,
+        "embedding_dimensions": [
+          384
+        ],
+        "examples_per_relation_min": 700,
+        "examples_per_relation_max": 700
+      },
+      "val": {
+        "relations": 16,
+        "examples": 11200,
+        "embedding_dimensions": [
+          384
+        ],
+        "examples_per_relation_min": 700,
+        "examples_per_relation_max": 700
+      }
+    }
+  },
+  "records": [
+    {
+      "n_qubits": 8,
+      "seed": 7,
+      "train_episodes": 2000,
+      "validation_episodes": 600,
+      "learning_rate": 0.0003,
+      "accuracy_mean": 0.6172666666666667,
+      "accuracy_95ci": 0.009719212603300007,
+      "weighted_f1_mean": 0.5881253957291916,
+      "weighted_f1_95ci": 0.01048645993897758,
+      "initial_train_loss": 1.8393731029667197,
+      "last_train_loss": 0.8496034965107025,
+      "minimum_train_loss": 0.12779674233657282,
+      "runtime_seconds": 456.9105884170858,
+      "checkpoint": "New_Go_implementation/results/bug_fix_rerun_20260928/training_sweep_checkpoints/8q_2000ep_lr_0p0003_seed_7.pt"
+    },
+    {
+      "n_qubits": 8,
+      "seed": 7,
+      "train_episodes": 2000,
+      "validation_episodes": 600,
+      "learning_rate": 0.001,
+      "accuracy_mean": 0.6378222222222223,
+      "accuracy_95ci": 0.009972354509754902,
+      "weighted_f1_mean": 0.6091800052490278,
+      "weighted_f1_95ci": 0.010714337800128147,
+      "initial_train_loss": 1.8393731029667197,
+      "last_train_loss": 0.6824053060060709,
+      "minimum_train_loss": 0.1339845028873292,
+      "runtime_seconds": 549.641426666989,
+      "checkpoint": "New_Go_implementation/results/bug_fix_rerun_20260928/training_sweep_checkpoints/8q_2000ep_lr_0p001_seed_7.pt"
+    },
+    {
+      "n_qubits": 8,
+      "seed": 7,
+      "train_episodes": 2000,
+      "validation_episodes": 600,
+      "learning_rate": 0.003,
+      "accuracy_mean": 0.5889555555555556,
+      "accuracy_95ci": 0.00990959159073921,
+      "weighted_f1_mean": 0.561351214740202,
+      "weighted_f1_95ci": 0.0104755397529025,
+      "initial_train_loss": 1.8393731029667197,
+      "last_train_loss": 1.0552671930396018,
+      "minimum_train_loss": 0.20634710015006058,
+      "runtime_seconds": 440.84355354192667,
+      "checkpoint": "New_Go_implementation/results/bug_fix_rerun_20260928/training_sweep_checkpoints/8q_2000ep_lr_0p003_seed_7.pt"
+    }
+  ]
+}

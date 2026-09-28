@@ -1,6 +1,55 @@
 """Small, explicit configuration objects for the experiment."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
+from pathlib import Path
+from typing import Any, TypeVar
+
+import yaml
+
+
+ConfigType = TypeVar("ConfigType")
+
+
+def load_yaml_config(path: str | Path) -> dict[str, Any]:
+    """Load one experiment YAML mapping, rejecting empty or malformed files."""
+
+    with Path(path).open(encoding="utf-8") as handle:
+        values = yaml.safe_load(handle)
+    if not isinstance(values, dict):
+        raise ValueError(f"Expected a YAML mapping in {path}.")
+    known = {
+        field.name
+        for config_type in (EpisodeConfig, ModelConfig, TrainConfig)
+        for field in fields(config_type)
+    }
+    unknown = sorted(set(values) - known)
+    if unknown:
+        raise ValueError(f"Unknown experiment config keys in {path}: {unknown}.")
+    return values
+
+
+def dataclass_from_config(config_type: type[ConfigType], values: dict[str, Any]) -> ConfigType:
+    """Build a config dataclass from matching YAML keys; ignore other sections."""
+
+    allowed = {field.name for field in fields(config_type)}
+    return config_type(**{key: value for key, value in values.items() if key in allowed})
+
+
+def quantum_simulation_metadata(model_config: "ModelConfig") -> dict[str, Any]:
+    """Describe the exact simulator and circuit schedule in saved results."""
+
+    return {
+        "simulator": "PyTorch exact statevector (complex128)",
+        "shots": None,
+        "n_qubits": model_config.n_qubits,
+        "repetitions": model_config.quantum_reps,
+        "trainable_quantum_parameters": 2 * model_config.quantum_reps * model_config.n_qubits,
+        "gate_schedule": (
+            "initial input RY encoding; for each repetition: trainable per-qubit RY/RZ, "
+            "circular CNOT, input RY re-upload"
+        ),
+        "entanglement": "directed circular CNOT i -> (i + 1) mod n_qubits",
+    }
 
 
 @dataclass(frozen=True)
@@ -49,4 +98,3 @@ class TrainConfig:
     train_episodes: int = 20
     validation_episodes: int = 20
     seed: int = 7
-

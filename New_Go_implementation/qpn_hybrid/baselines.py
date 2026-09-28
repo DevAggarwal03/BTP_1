@@ -20,6 +20,7 @@ class ClassicalProtoNet(nn.Module):
         hidden_dim: int = 64,
         output_dim: int = 4,
         distance: str = "euclidean",
+        compression_mode: str = "mlp",
     ):
         super().__init__()
         if distance not in {"euclidean", "cosine"}:
@@ -29,6 +30,7 @@ class ClassicalProtoNet(nn.Module):
             input_dim=embedding_dim,
             hidden_dim=hidden_dim,
             n_qubits=output_dim,
+            mode=compression_mode,
         )
 
     def forward(

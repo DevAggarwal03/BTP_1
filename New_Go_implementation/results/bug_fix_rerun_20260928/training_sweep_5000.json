@@ -1,0 +1,87 @@
+{
+  "n_qubits": 8,
+  "model_config": {
+    "embedding_dim": 384,
+    "compression_hidden_dim": 64,
+    "n_qubits": 8,
+    "quantum_reps": 2,
+    "compression_mode": "mlp",
+    "beta_init": 10.0
+  },
+  "quantum_simulation": {
+    "simulator": "PyTorch exact statevector (complex128)",
+    "shots": null,
+    "n_qubits": 8,
+    "repetitions": 2,
+    "trainable_quantum_parameters": 32,
+    "gate_schedule": "initial input RY encoding; for each repetition: trainable per-qubit RY/RZ, circular CNOT, input RY re-upload",
+    "entanglement": "directed circular CNOT i -> (i + 1) mod n_qubits"
+  },
+  "seeds": [
+    7
+  ],
+  "train_episodes": [
+    5000
+  ],
+  "learning_rates": [
+    0.001
+  ],
+  "optimizer": {
+    "name": "Adam",
+    "weight_decay": 1e-05
+  },
+  "validation_episodes": 600,
+  "episode_config": {
+    "n_way": 5,
+    "k_shot": 1,
+    "q_queries": 15
+  },
+  "data": {
+    "data_directory": "/Users/devaggarwal/BTP/BTP_combined/BTP_Quantum_few_rel/data",
+    "source_files": {
+      "train": "/Users/devaggarwal/BTP/BTP_combined/BTP_Quantum_few_rel/data/train_embeddings.npz",
+      "val": "/Users/devaggarwal/BTP/BTP_combined/BTP_Quantum_few_rel/data/val_embeddings.npz"
+    },
+    "sentence_encoder": "sentence-transformers/all-MiniLM-L6-v2 (frozen cached embeddings)",
+    "embeddings_normalized": false,
+    "entity_markers": "[H]...[/H] and [T]...[/T] per Implementation Context",
+    "splits": {
+      "train": {
+        "relations": 64,
+        "examples": 44800,
+        "embedding_dimensions": [
+          384
+        ],
+        "examples_per_relation_min": 700,
+        "examples_per_relation_max": 700
+      },
+      "val": {
+        "relations": 16,
+        "examples": 11200,
+        "embedding_dimensions": [
+          384
+        ],
+        "examples_per_relation_min": 700,
+        "examples_per_relation_max": 700
+      }
+    }
+  },
+  "records": [
+    {
+      "n_qubits": 8,
+      "seed": 7,
+      "train_episodes": 5000,
+      "validation_episodes": 600,
+      "learning_rate": 0.001,
+      "accuracy_mean": 0.6281111111111112,
+      "accuracy_95ci": 0.01021650848193905,
+      "weighted_f1_mean": 0.6010267341868095,
+      "weighted_f1_95ci": 0.010949345801141217,
+      "initial_train_loss": 1.8393731029667197,
+      "last_train_loss": 0.7273867179138899,
+      "minimum_train_loss": 0.06373950425246329,
+      "runtime_seconds": 1049.8791895000031,
+      "checkpoint": "New_Go_implementation/results/bug_fix_rerun_20260928/training_sweep_checkpoints/8q_5000ep_lr_0p001_seed_7.pt"
+    }
+  ]
+}

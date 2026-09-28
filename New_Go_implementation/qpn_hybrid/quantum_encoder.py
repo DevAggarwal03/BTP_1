@@ -68,16 +68,18 @@ def _apply_cnot(states: torch.Tensor, control: int, target: int, n_qubits: int) 
 class DataReuploadingQuantumEncoder(nn.Module):
     """Angle encoding followed by trainable data re-uploading layers.
 
-    Each repetition applies input-dependent RY rotations, trainable RY/RZ
-    rotations, and a circular CNOT chain.  Because the input is applied in
-    every repetition, different sentences do not merely differ by a common
-    final unitary.
+    The circuit begins with input-dependent RY rotations. Each trainable
+    RY/RZ block and circular CNOT chain is followed by another input encoding.
+    The final operation is therefore input-dependent, so no trainable block
+    is hidden inside a common final unitary that cancels from fidelities.
     """
 
     def __init__(self, n_qubits: int = 4, reps: int = 2) -> None:
         super().__init__()
         if n_qubits < 2:
             raise ValueError("Use at least two qubits so the entangling layer is meaningful.")
+        if reps < 1:
+            raise ValueError("reps must be at least one so the circuit has trainable layers.")
         self.n_qubits = n_qubits
         self.reps = reps
         self.theta = nn.Parameter(torch.empty(reps, 2, n_qubits, dtype=torch.float64))
@@ -102,11 +104,15 @@ class DataReuploadingQuantumEncoder(nn.Module):
         )
         states[:, 0] = 1.0 + 0.0j
 
-        for repetition in range(self.reps):
-            for qubit in range(self.n_qubits):
-                input_gate = _rotation_matrix(angles[:, qubit], "ry")
-                states = _apply_batched_single_qubit_gate(states, input_gate, qubit, self.n_qubits)
+        # Initial angle encoding, followed by data re-uploading after every
+        # trainable block. In particular, keep the final re-upload: a shared
+        # trainable unitary after the last input encoding would leave all
+        # support/query fidelities invariant to that final block.
+        for qubit in range(self.n_qubits):
+            input_gate = _rotation_matrix(angles[:, qubit], "ry")
+            states = _apply_batched_single_qubit_gate(states, input_gate, qubit, self.n_qubits)
 
+        for repetition in range(self.reps):
             for qubit in range(self.n_qubits):
                 trainable_ry = _rotation_matrix(
                     self.theta[repetition, 0, qubit].expand(batch_size), "ry"
@@ -123,6 +129,10 @@ class DataReuploadingQuantumEncoder(nn.Module):
 
             for qubit in range(self.n_qubits):
                 states = _apply_cnot(states, qubit, (qubit + 1) % self.n_qubits, self.n_qubits)
+
+            for qubit in range(self.n_qubits):
+                input_gate = _rotation_matrix(angles[:, qubit], "ry")
+                states = _apply_batched_single_qubit_gate(states, input_gate, qubit, self.n_qubits)
 
         norm = states.abs().square().sum(dim=-1, keepdim=True).sqrt().clamp_min(1e-12)
         return states / norm
